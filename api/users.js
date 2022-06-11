@@ -1,27 +1,27 @@
 const express = require('express');
 const usersRouter = express.Router();
+
+const { 
+  createUser,
+  getAllUsers,
+  getUserByUsername,
+} = require('../db');
+
 const jwt = require('jsonwebtoken');
-const { getAllUsers, getUserByUsername, createUser } = require('../db');
 
-
-usersRouter.use((req, res, next) => {
-  console.log("A request is being made to /users");
-
-  next(); // THIS IS DIFFERENT
-});
-
-
-
-usersRouter.get('/', async (req, res) => {
+usersRouter.get('/', async (req, res, next) => {
+  try {
     const users = await getAllUsers();
-
+  
     res.send({
-        users
-     });
+      users
+    });
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
 });
 
 usersRouter.post('/login', async (req, res, next) => {
-
   const { username, password } = req.body;
 
   // request must have both
@@ -59,13 +59,12 @@ usersRouter.post('/login', async (req, res, next) => {
   }
 });
 
-
 usersRouter.post('/register', async (req, res, next) => {
   const { username, password, name, location } = req.body;
 
   try {
     const _user = await getUserByUsername(username);
-
+  
     if (_user) {
       next({
         name: 'UserExistsError',
@@ -92,13 +91,8 @@ usersRouter.post('/register', async (req, res, next) => {
       token 
     });
   } catch ({ name, message }) {
-    next({ name, message })
+    next({ name, message });
   } 
-});
-
-usersRouter.post('/login', async (req, res, next) => {
-  console.log(req.body);
-  res.end();
 });
 
 module.exports = usersRouter;
